@@ -4,6 +4,8 @@ Excited every Wednesday for the Sandals Resorts new 7-7-7 deals to be updated on
 
 This Python scipt will extract and print the Sandals report code along with the Sandals Room Code for the 7-7-7 deals that are listed on their [website](https://www.sandals.com/specials/?scroll=best-value-suites) - sandals.com !
 
+The code for the capability to write the results to an Excel file can be found in the `feature/excel` branch
+
 ## Requirements
 
 Pyhton3
@@ -28,3 +30,24 @@ Start Date: 2024-12-25, End Date: 2024-12-31, Resort Code: SRC, Room Code: HJS
 Start Date: 2024-12-25, End Date: 2024-12-31, Resort Code: SCR, Room Code: KB
 ```
 
+## Sandals Resort Codes
+
+| Resort Code   | Resort |
+| ------------- | ------ |
+|SBR            | Sandals Royal Barbados |
+|SBD            | Sandals Barbados |
+|SAT            | Sandals Antigua |
+|SGL            | Sandals Grande St Lucia |
+|SLS            | Sandals Grenada |
+|SHC            | Sandals Halcyon - St Lucia |
+|SMB            | Sandals Montego Bay |
+|SNG            | Sandals Negril |
+|SGO            | Sandals Ochi |
+|SLU            | Sandals La Toc - St Lucia |
+|SRB            | Sandals Royal Bahamian - Nassau |
+|SRC            | Sandals Royal Caribbean - Montego Bay |
+|BRP            | Sandals Royal Plantation - Ochos Rio |
+|SWH            | Sandals South Coast - Whitehouse Jamaica |
+|SCR            | Sandals Curacao |
+|SSV            | Sandals Saint Vincent |
+|SDR            | Sandals Dunn's River |
