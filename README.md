@@ -4,13 +4,15 @@ Excited every Wednesday for the Sandals Resorts new 7-7-7 deals to be updated on
 
 This Python scipt will extract and print the Sandals report code along with the Sandals Room Code for the 7-7-7 deals that are listed on their [website](https://www.sandals.com/specials/?scroll=best-value-suites) - sandals.com !
 
-The code for the capability to write the results to an Excel file can be found in the `feature/excel` branch
-
 ## Requirements
+
+An excel file with `Start Date` entered into cell A1 and `End Date` entered into cell B1
+
+Update the `excel_file_path` variable in the `sandals7-7-7.py` file so that the file location and filename are correct
 
 Pyhton3
 
-This script utilizes the `selenium` and `webdirver_manager` modules
+This script utilizes the `selenium`, `webdirver_manager`, and `pandas` modules
 
 ## To run the script
 
