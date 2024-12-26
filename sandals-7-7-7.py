@@ -62,7 +62,7 @@ try:
     # Clean up any extra characters like semicolons or other JavaScript syntax
     json_data = json_data.strip()
     
-    # Append the missing part to make the JSON complete
+    # Append the missing brackets to make the JSON complete
     json_data += ' } ] } ]'
 
     # Debug: Inspect cleaned JSON
@@ -81,7 +81,7 @@ try:
                 for room in promo_data.get("rooms", []):
                     room_code = room.get("roomCode")
                     resort_code = room.get("resortCode")
-                    print(f"Start Date: {start_date}, End Date: {end_date}, Room Code: {room_code}, Resort Code: {resort_code}")
+                    print(f"Start Date: {start_date}, End Date: {end_date}, Resort Code: {resort_code}, Room Code: {room_code}")
                     
                     # Ensure the resort code column exists
                     if resort_code not in df.columns:
