@@ -1,94 +1,111 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
+import os
+import requests
+import re
 import json
+import pandas as pd
+from bs4 import BeautifulSoup
+from openpyxl import load_workbook, Workbook
 
-# Set up ChromeDriver
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+# Define constants
+url = "https://www.sandals.com/specials/suite-deals/"
+today_date = pd.Timestamp.today().strftime("%Y-%m-%d")  # Format: yyyy-mm-dd
 
-try:
-    # Open the webpage and wait for it to load
-    url = "https://www.sandals.com/specials/?scroll=best-value-suites"
-    driver.get(url)
-    WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, "script")))
+# Existing Excel file path and filename
+excel_file_path = "C:\Git\data.xlsx"
 
-    # Extract JSON from script tag
-    promotions_json = driver.execute_script("""
-        const scriptTags = [...document.querySelectorAll('script')];
-        for (let tag of scriptTags) {
-            if (tag.textContent.includes('currentPromotions')) {
-                return tag.textContent;
-            }
-        }
-        return null;
-    """)
+# Define headers for HTTP request
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
 
-    # Locate and clean the JSON portion
-    start = promotions_json.find('currentPromotions')  # Locate the start of the relevant JSON
-    if start == -1:
-        print("Error: currentPromotions not found in the script.")
-        driver.quit()
-        exit()
+# Fetch the webpage
+response = requests.get(url, headers=headers)
 
-    # Start extracting after the '=' (i.e., after '=' sign)
-    start = promotions_json.find("[", start)  # Find the first opening curly brace
-    end = promotions_json.find("]", start) + 1  # Find the corresponding closing curly brace
+if response.status_code == 200:
+    html_content = response.text
+    soup = BeautifulSoup(html_content, "html.parser")
 
-    # Extract the JSON portion
-    json_data = promotions_json[start:end]
+    # Extract all script contents
+    script_contents = [script.string for script in soup.find_all("script") if script.string]
 
-    # Clean up any extra characters like semicolons or other JavaScript syntax
-    json_data = json_data.strip()
+    # Search for JSON-like structures containing "promotionTitle"
+    promotion_data = set()  # Use a set to store unique promotions
+
+    for script in script_contents:
+        matches = re.findall(r'({.*?promotionTitle.*?})', script, re.DOTALL)
+        for match in matches:
+            try:
+                promo_json = json.loads(match)
+                promotion_title = promo_json.get("promotionTitle", "")
+                rst_code = promo_json.get("rstCode", "N/A")
+                room_category = promo_json.get("roomCategory", "N/A")
+
+                if promotion_title.startswith("7-7-7 Savings"):
+                    # Store unique promotions
+                    promotion_data.add((promotion_title, rst_code, room_category))
+            except json.JSONDecodeError:
+                continue
+
+    # Convert to DataFrame
+    df = pd.DataFrame(list(promotion_data), columns=["promotionTitle", "rstCode", "roomCategory"])
+    # Convert to DataFrame (current promotions only)
+    df_current_promotions = pd.DataFrame(list(promotion_data), columns=["promotionTitle", "rstCode", "roomCategory"])
+
+    # Sort DataFrame by rstCode
+    df_current_promotions = df_current_promotions.sort_values(by=["rstCode"]).reset_index(drop=True)
+
+    # Load or create an Excel file
+    if os.path.exists(excel_file_path):
+        wb = load_workbook(excel_file_path)
+        sheet = wb.active
+    else:
+        wb = Workbook()
+        sheet = wb.active
+        sheet.title = "7-7-7 Promotions"
+        sheet.append(["Start Date"])  # Initialize headers
+
+    # Check if today's date already exists in column A
+    start_dates = [sheet.cell(row=i, column=1).value for i in range(2, sheet.max_row + 1)]
     
-    # Append the missing brackets to make the JSON complete
-    json_data += ' } ] } ]'
+    if today_date in start_dates:
+        # Find existing row index
+        existing_row = start_dates.index(today_date) + 2  # Offset by 2 due to header row
+    else:
+        # Find the next available row for today's date
+        existing_row = sheet.max_row + 1
+        sheet.cell(row=existing_row, column=1, value=today_date)  # Set the Start Date in column A
 
-    # Attempt to parse the cleaned JSON
-    promotions = json.loads(json_data)
-    
-    # Filter and process 'BEST_VALUE_SUITES' promotions
-    print("BEST_VALUE_SUITES Promotions:")
-    for promotion in promotions:  # Iterate over the list of promotions
-        if promotion.get("type") == "BEST_VALUE_SUITES":  # Now 'promotion' is a dictionary
-            for promo_data in promotion.get("data", []):
-                start_date = promo_data.get("startDate")
-                end_date = promo_data.get("endDate")
-                for room in promo_data.get("rooms", []):
-                    room_code = room.get("roomCode")
-                    resort_code = room.get("resortCode")
-                    print(f"Start Date: {start_date}, End Date: {end_date}, Resort Code: {resort_code}, Room Code: {room_code}")
+    # Get existing headers (Rst Codes)
+    headers = [sheet.cell(row=1, column=col).value for col in range(2, sheet.max_column + 1)]
 
-except json.JSONDecodeError as e:
-    print("Error parsing JSON:", e)
-except Exception as e:
-    print(f"An error occurred: {e}")
-finally:
-    driver.quit()
+    for promotion_title, rst_code, room_category in df.itertuples(index=False):
+        if rst_code not in headers:
+            # Find next available column
+            next_col = len(headers) + 2  # Start after column A
+            sheet.cell(row=1, column=next_col, value=rst_code)  # Add new header
+            headers.append(rst_code)  # Update local header tracking
 
+        # Get column index
+        col_index = headers.index(rst_code) + 2
 
-# Sandals Resport Codes
+        # Check if roomCategory is already in the cell, if not, update it
+        existing_value = sheet.cell(row=existing_row, column=col_index).value
+        if existing_value:
+            # Avoid duplication in the same cell (comma-separated)
+            room_categories = set(existing_value.split(", "))
+            room_categories.add(room_category)
+            sheet.cell(row=existing_row, column=col_index, value=", ".join(room_categories))
+        else:
+            sheet.cell(row=existing_row, column=col_index, value=room_category)
 
-# SBR   Sandals Royal Barbados
-# SBD   Sandals Barbados
-# SEB   Sandals Emerald Bay - Exuma Bahamas
-# SAT   Sandals Antigua
-# SGL   Sandals Grande St Lucia
-# SLS   Sandals Grenada
-# SHC   Sandals Halcyon - St Lucia
-# SMB   Sandals Montego Bay
-# SNG   Sandals Negril
-# SGO   Sandals Ochi
-# SLU   Sandals La Toc - St Lucia
-# SRB   Sandals Royal Bahamian - Nassau
-# SRC   Sandals Royal Caribbean - Montego Bay
-# BRP   Sandals Royal Plantation - Ochos Rio
-# SWH   Sandals South Coast - Whitehouse Jamaica
-# SCR   Sandals Curacao
-# SSV   Sandals Saint Vincent
-# SDR   Sandals Dunn's River
+    # Save the updated Excel file
+    wb.save(excel_file_path)
+    wb.close()
+    print(f"Data successfully updated in {excel_file_path}")
+
+    # Print only today's extracted promotions, sorted by rstCode
+    print("\nToday's Extracted Promotions (Sorted by rstCode):\n")
+    print(df_current_promotions)
+
+else:
+    print(f"Failed to fetch the webpage. Status Code: {response.status_code}")
