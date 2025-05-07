@@ -1,5 +1,15 @@
 # Sandals Resorts 7-7-7
 
+## Change Log
+
+5-7-2025 
+
+- Updated code to pull sandals and beaches 7-7-7 promo's from each individual site due to their website redesign
+
+- Also of note, Beaches Ochos Rios will no longer be showing up on the deals because they are closing for renovations
+
+## Sandals and Beaches 7-7-7
+
 Excited every Wednesday for the Sandals Resorts new 7-7-7 deals to be updated on Sandals website?
 
 This Python scipt will extract and print the Sandals report code along with the Sandals Room Code for the 7-7-7 deals that are listed on their [website](https://www.sandals.com/specials/suite-deals/) - sandals.com !
