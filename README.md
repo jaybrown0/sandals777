@@ -1,6 +1,5 @@
 # Sandals Resorts 7-7-7
 
-<<<<<<< HEAD
 =======
 ## Change Log
 
@@ -10,7 +9,6 @@
 
 - Also of note, Beaches Ochos Rios will no longer be showing up on the deals because they are closing for renovations
 
->>>>>>> b68709fbb0f11314bf45b2a9a60beffc1b9d1709
 ## Sandals and Beaches 7-7-7
 
 Excited every Wednesday for the Sandals Resorts new 7-7-7 deals to be updated on Sandals website?
